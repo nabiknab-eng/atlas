@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Atlas teploty, vlhkosti, srážek a větru</title>
+<link rel="stylesheet" href="styl-vitr100.css">
+<script src="geometry.js" defer></script>
+<script src="data-1946/period.js" defer></script>
+<script src="atlas-srazky.js" defer></script>
+</head>
+<body>
+<main>
+<header>
+  <p class="eyebrow">KLIMATICKÝ ATLAS <span id="coverage"></span></p>
+  <h1>Teplota, vlhkost, srážky a vítr</h1>
+</header>
+<section class="tool" aria-label="Ovládání atlasu">
+ <div class="toolbar">
+  <div class="control"><span class="label">Oblast</span><div class="segments" role="group" aria-label="Oblast" id="regions">
+   <button data-region="world" aria-pressed="true">Svět</button><button data-region="europe" aria-pressed="false">Evropa</button><button data-region="central" aria-pressed="false">Střední Evropa</button>
+  </div></div>
+  <div class="control"><span class="label">Klouzavý průměr</span><div class="segments" role="group" aria-label="Klouzavý průměr" id="windows">
+   <button data-window="12" aria-pressed="true">12 měsíců</button><button data-window="60" aria-pressed="false">60 měsíců</button>
+  </div></div>
+ </div>
+ <div class="time">
+  <div class="time-head"><div><span class="label">Zobrazené období</span><div id="date">Načítám…</div></div><span id="reference"></span></div>
+  <div class="playback">
+   <button id="play" aria-label="Přehrát animaci">▶ <span>Přehrát</span></button>
+   <div class="seek">
+    <input id="month" aria-label="Konec zobrazeného období" type="range" min="0" max="1" value="0" step="1">
+    <div class="ticks"><span id="first"></span><span data-year="1960">1960</span><span data-year="1980">1980</span><span data-year="2000">2000</span><span data-year="2020">2020</span><span id="last"></span></div>
+   </div>
+   <div class="steps"><button id="prev" aria-label="Předchozí měsíc" title="Předchozí měsíc">←</button><button id="next" aria-label="Další měsíc" title="Další měsíc">→</button></div>
+  </div>
+ </div>
+</section>
+<p id="status" role="status" hidden></p>
+<section class="maps" aria-label="Porovnání anomálií">
+ <article>
+  <div class="map-head"><div><p class="label">BERKELEY EARTH</p><h2>Anomálie teploty</h2></div><b class="unit">°C</b></div>
+  <div class="map" id="temp-map"><canvas aria-label="Mapa anomálie teploty"></canvas><img alt="" draggable="false"><div class="target" hidden></div></div>
+  <div class="legend"><div class="gradient temp"></div><div class="legend-ticks" id="temp-legend"></div></div>
+ </article>
+ <article>
+  <div class="map-head map-head-switch">
+   <p class="label" id="humidity-source">ERA5 · 2 M</p>
+   <div class="segments" id="humidity-types" role="group" aria-label="Vlhkost nebo srážky">
+    <button data-humidity="absolute" aria-pressed="true">Absolutní</button>
+    <button data-humidity="relative" aria-pressed="false">Relativní</button>
+    <button data-humidity="precipitation" aria-pressed="false">Srážky</button>
+   </div>
+   <h2 id="humidity-heading">Anomálie vlhkosti</h2><b class="unit" id="humidity-unit">g/m³</b>
+  </div>
+  <div class="map" id="humidity-map"><canvas aria-label="Mapa anomálie absolutní vlhkosti"></canvas><img alt="" draggable="false"><div class="target" hidden></div></div>
+  <div class="legend"><div class="gradient humidity"></div><div class="legend-ticks" id="humidity-legend"></div></div>
+ </article>
+ <article>
+  <div class="map-head map-head-switch">
+   <p class="label" id="wind-level">COPERNICUS ERA5 · 10 M</p>
+   <div class="segments" id="wind-levels" role="group" aria-label="Veličina větru">
+    <button data-wind="wind" aria-pressed="true">Rychlost 10 m</button>
+    <button data-wind="windpower" aria-pressed="false">Výkon 0–1 km</button>
+   </div>
+   <h2 id="wind-heading">Anomálie rychlosti větru</h2><b class="unit" id="wind-unit">m/s</b>
+  </div>
+  <div class="map" id="wind-map"><canvas aria-label="Mapa anomálie rychlosti větru"></canvas><img alt="" draggable="false"><div class="target" hidden></div></div>
+  <div class="legend"><div class="gradient wind"></div><div class="legend-ticks" id="wind-legend"></div></div>
+ </article>
+</section>
+<div class="readout" id="readout"><span>Přejeďte přes mapu a porovnejte hodnoty ve stejné buňce.</span></div>
+<details>
+ <summary>Jak číst mapy a odkud jsou data</summary>
+ <div id="method">
+  <p>Každá mapa ukazuje odchylku od dlouhodobého průměru ve stejné buňce. Nula znamená obvyklou hodnotu pro dané místo. Stupnice jsou pevné při přehrávání i při změně oblasti nebo délky průměru. Po najetí na mapu se ukáže číselná hodnota. U teploty se zobrazí také podíl dnů v okně, které připadají na doplněné měsíce, a počet doplněných měsíců v referenci, pokud do výpočtu nějaké vstoupily.</p>
+  <p>Pro společnou referenci <strong id="ref-method"></strong> má každý úplný rok stejnou váhu a měsíce v něm jsou vážené počtem dní. V klouzavém okně se měsíce rovněž váží počtem dní. Mezi snímky se okno posouvá o jeden měsíc. Poslední neúplný rok se zobrazuje, ale do reference nevstupuje.</p>
+  <p><a href="https://berkeleyearth.org/data/">Berkeley Earth</a>: předběžné globální měsíční pole High-Resolution TAVG, oficiální mřížka 1°. Před výpočtem společné reference byla k dodaným teplotním anomáliím přičtena původní měsíční klimatologie. Nad otevřeným oceánem pole využívá teplotu hladiny, nad mořským ledem teplotu vzduchu.</p>
+  <p>Chybějící buňku doplňujeme průměrem dostupných hodnot až z osmi bezprostředních sousedů ve stejném měsíci. Větší mezery se vyplňují v postupných krocích od okraje, takže se odhad může opírat o sousedy doplněné v předchozím kroku. U Berkeley Earth se takto doplňuje původní měsíční anomálie před přičtením klimatologie daného místa. V největší teplotní mezeře bylo potřeba 40 kroků. V měsíčních polích větru, vlhkosti a srážek ERA5 nebyly mezery.</p>
+  <p>Vlhkost ve 2 m odhadujeme z měsíčních průměrů teploty vzduchu a rosného bodu ERA5. Absolutní vlhkost vyjadřuje hmotnost vodní páry v g/m³. Relativní vlhkost je podíl vůči nasycení nad kapalnou vodou a její anomálie se udává v procentních bodech. Přepočet měsíčních vstupů je aproximace měsíčního průměru skutečné vlhkosti. <a href="https://confluence.ecmwf.int/display/METV/Thermodynamic+Functions">Rovnice ECMWF</a></p>
+  <p><strong>Srážky.</strong> Používáme celkové srážky z měsíčních dat ERA5. Zahrnují déšť i sníh přepočtený na množství vody. Mapa v mm/den ukazuje, o kolik se průměrný denní úhrn za zvolené období liší od průměru v daném místě. <a href="https://confluence.ecmwf.int/spaces/CKB/pages/197702790/Conversion%2Btable%2Bfor%2Baccumulated%2Bvariables%2Btotal%2Bprecipitation%2Bfluxes">Převod srážek ERA5</a></p>
+  <p>Mapa rychlosti v 10 m používá měsíční průměr velikosti rychlosti větru z ERA5. Směr větru nevstupuje ani do odhadu výkonu.</p>
+  <p><strong>Index výkonu větru ve vrstvě 0–1 km.</strong> Měsíční rychlost z 10 m rozšiřujeme do výšky pomocí logaritmického profilu. Používáme pevnou drsnost 0,2 mm nad vodou a 0,10 m nad pevninou. U pobřeží oba odhady vážíme podílem pevniny podle masky ERA5. Hustotu vzduchu bereme ze standardní atmosféry podle nadmořské výšky terénu a výšky nad ním. Výkonovou hustotu ½ρv³ průměrujeme přes výšku vrstvy a udáváme ve W/m² plochy kolmé k větru. <a href="https://www.ecmwf.int/sites/default/files/elibrary/2002/16959-parametrization-planetary-boundary-layer.pdf">Profil větru u povrchu</a> · <a href="https://ntrs.nasa.gov/citations/20230003601">Standardní atmosféra</a> · <a href="https://github.com/google-research/arco-era5">Maska a terén z ARCO ERA5</a></p>
+  <p>Profil v každém místě držíme v čase pevný. Prodloužení profilu do 1 km je hrubý odhad. Index používá třetí mocninu měsíčního průměru rychlosti, takže hodinové výkyvy rychlosti se do něj nepromítají.</p>
+  <p>Po najetí na mapu větru je odchylka i v procentech vůči místnímu průměru zvolené veličiny za roky 1946–2025. Hodnoty mimo barevnou stupnici mají krajní barvu a po najetí se zobrazí v plné velikosti.</p>
+  <p>Vlhkost, srážky i vítr převádíme plošně váženým průměrem ze sítě 0,25° na 1°. Rozlišení dat je 1° ve všech výřezech. V rané části reanalýzy je pozorovací pokrytí řidší. Září 2026 používá předběžnou verzi ERA5T. Pobřeží a hranice poskytuje Natural Earth. <a href="https://doi.org/10.24381/cds.f17050d7">Copernicus Climate Change Service / ECMWF, ERA5</a></p>
+ </div>
+</details>
+</main>
+</body>
+</html>
