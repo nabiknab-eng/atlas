@@ -55,3 +55,4 @@ a{color:var(--teal);text-underline-offset:2px}
 #humidity-types button,#wind-levels button{font-size:.73rem;padding:3px 6px}
 @media(min-width:831px) and (max-width:1010px){.map-head-switch .label{font-size:.58rem;letter-spacing:.05em}}
 @media(max-width:830px){.maps{grid-template-columns:minmax(0,1fr);gap:12px}.map-head{min-height:0}}
+@media(min-width:831px){.maps{grid-template-rows:auto auto auto}.maps article{display:grid;grid-row:span 3;grid-template-rows:subgrid}}
